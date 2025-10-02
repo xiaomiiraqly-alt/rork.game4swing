@@ -33,10 +33,10 @@ const initialGameState: GameState = {
   currentPlayerIndex: 0,
   currentCategory: 'знакомство',
   usedTasks: {
-    'знакомство': { male: [], female: [] },
-    'флирт': { male: [], female: [] },
-    'прелюдия': { male: [], female: [] },
-    'fire': { male: [], female: [] },
+    'знакомство': { male: [], female: [], common: [] },
+    'флирт': { male: [], female: [], common: [] },
+    'прелюдия': { male: [], female: [], common: [] },
+    'fire': { male: [], female: [], common: [] },
   },
   isGameStarted: false,
 };
@@ -51,6 +51,10 @@ const initialTaskBank: TaskBank = {
       { id: '3', text: 'Поделись своей самой заветной мечтой', category: 'знакомство', gender: 'female' },
       { id: '4', text: 'Расскажи о месте, где ты чувствуешь себя счастливой', category: 'знакомство', gender: 'female' },
     ],
+    common: [
+      { id: '17', text: 'Расскажи о самом ярком впечатлении из детства', category: 'знакомство', gender: 'common' },
+      { id: '18', text: 'Поделись своим любимым хобби', category: 'знакомство', gender: 'common' },
+    ],
   },
   'флирт': {
     male: [
@@ -60,6 +64,10 @@ const initialTaskBank: TaskBank = {
     female: [
       { id: '7', text: 'Подмигни самому привлекательному мужчине в комнате', category: 'флирт', gender: 'female' },
       { id: '8', text: 'Расскажи о своем идеальном свидании', category: 'флирт', gender: 'female' },
+    ],
+    common: [
+      { id: '19', text: 'Сделай комплимент человеку напротив', category: 'флирт', gender: 'common' },
+      { id: '20', text: 'Расскажи о самом романтичном моменте в твоей жизни', category: 'флирт', gender: 'common' },
     ],
   },
   'прелюдия': {
@@ -71,6 +79,10 @@ const initialTaskBank: TaskBank = {
       { id: '11', text: 'Поделись секретом соблазнения', category: 'прелюдия', gender: 'female' },
       { id: '12', text: 'Расскажи, что тебя возбуждает больше всего', category: 'прелюдия', gender: 'female' },
     ],
+    common: [
+      { id: '21', text: 'Опиши идеальную романтическую атмосферу', category: 'прелюдия', gender: 'common' },
+      { id: '22', text: 'Расскажи о самом чувственном прикосновении', category: 'прелюдия', gender: 'common' },
+    ],
   },
   'fire': {
     male: [
@@ -80,6 +92,10 @@ const initialTaskBank: TaskBank = {
     female: [
       { id: '15', text: 'Поделись своим самым смелым желанием', category: 'fire', gender: 'female' },
       { id: '16', text: 'Расскажи, что заводит тебя больше всего', category: 'fire', gender: 'female' },
+    ],
+    common: [
+      { id: '23', text: 'Опиши самый страстный момент', category: 'fire', gender: 'common' },
+      { id: '24', text: 'Поделись своей самой смелой фантазией', category: 'fire', gender: 'common' },
     ],
   },
 };
@@ -152,23 +168,34 @@ export const [GameProvider, useGame] = createContextHook(() => {
     const currentPlayer = getCurrentPlayer();
     if (!currentPlayer) return null;
 
-    const categoryTasks = taskBank[gameState.currentCategory][currentPlayer.gender];
-    const usedTaskIds = gameState.usedTasks[gameState.currentCategory][currentPlayer.gender];
+    const genderTasks = taskBank[gameState.currentCategory][currentPlayer.gender];
+    const commonTasks = taskBank[gameState.currentCategory].common;
+    const usedGenderTaskIds = gameState.usedTasks[gameState.currentCategory][currentPlayer.gender];
+    const usedCommonTaskIds = gameState.usedTasks[gameState.currentCategory].common;
     
-    const availableTasks = categoryTasks.filter(task => !usedTaskIds.includes(task.id));
+    const availableGenderTasks = genderTasks.filter(task => !usedGenderTaskIds.includes(task.id));
+    const availableCommonTasks = commonTasks.filter(task => !usedCommonTaskIds.includes(task.id));
     
-    if (availableTasks.length === 0) return null;
+    const allAvailableTasks = [...availableGenderTasks, ...availableCommonTasks];
     
-    const randomIndex = Math.floor(Math.random() * availableTasks.length);
-    return availableTasks[randomIndex];
+    if (allAvailableTasks.length === 0) return null;
+    
+    const randomIndex = Math.floor(Math.random() * allAvailableTasks.length);
+    return allAvailableTasks[randomIndex];
   }, [taskBank, gameState.currentCategory, gameState.usedTasks, getCurrentPlayer]);
 
   const markTaskAsUsed = useCallback((taskId: string) => {
     const currentPlayer = getCurrentPlayer();
     if (!currentPlayer) return;
 
+    const genderTasks = taskBank[gameState.currentCategory][currentPlayer.gender];
+    const commonTasks = taskBank[gameState.currentCategory].common;
+    
+    const isCommonTask = commonTasks.some(task => task.id === taskId);
+    const taskGender = isCommonTask ? 'common' : currentPlayer.gender;
+
     const newUsedTasks = { ...gameState.usedTasks };
-    newUsedTasks[gameState.currentCategory][currentPlayer.gender].push(taskId);
+    newUsedTasks[gameState.currentCategory][taskGender].push(taskId);
 
     const newGameState = {
       ...gameState,
@@ -176,7 +203,7 @@ export const [GameProvider, useGame] = createContextHook(() => {
     };
     
     saveGameState(newGameState);
-  }, [gameState, getCurrentPlayer, saveGameState]);
+  }, [gameState, getCurrentPlayer, saveGameState, taskBank]);
 
   const nextPlayer = useCallback(() => {
     const nextIndex = (gameState.currentPlayerIndex + 1) % gameState.players.length;
@@ -197,7 +224,7 @@ export const [GameProvider, useGame] = createContextHook(() => {
       currentCategory: categories[nextIndex],
       usedTasks: {
         ...gameState.usedTasks,
-        [categories[nextIndex]]: { male: [], female: [] },
+        [categories[nextIndex]]: { male: [], female: [], common: [] },
       },
     };
     saveGameState(newGameState);

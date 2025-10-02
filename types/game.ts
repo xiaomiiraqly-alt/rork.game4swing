@@ -1,4 +1,4 @@
-export type Gender = 'male' | 'female';
+export type Gender = 'male' | 'female' | 'common';
 
 export type Category = 'знакомство' | 'флирт' | 'прелюдия' | 'fire';
 
@@ -26,6 +26,8 @@ export type GameState = {
 
 export type TaskBank = {
   [K in Category]: {
-    [G in Gender]: Task[];
+    male: Task[];
+    female: Task[];
+    common: Task[];
   };
 };

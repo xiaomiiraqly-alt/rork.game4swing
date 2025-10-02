@@ -23,7 +23,7 @@ export default function TaskEditorScreen() {
   const { taskBank, addTask, deleteTask } = useGame();
   const insets = useSafeAreaInsets();
   const [selectedCategory, setSelectedCategory] = useState<Category>('знакомство');
-  const [selectedGender, setSelectedGender] = useState<Gender>('male');
+  const [selectedGender, setSelectedGender] = useState<Gender>('common');
   const [newTaskText, setNewTaskText] = useState('');
   const [showErrorModal, setShowErrorModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
@@ -128,8 +128,17 @@ export default function TaskEditorScreen() {
               </Animated.View>
 
               <Animated.View style={[styles.section, { opacity: sectionAnim2, transform: [{ translateY: sectionAnim2.interpolate({ inputRange: [0, 1], outputRange: [30, 0] }) }] }]}>
-                <Text style={styles.sectionTitle}>Пол</Text>
+                <Text style={styles.sectionTitle}>Категория игроков</Text>
                 <View style={styles.genderContainer}>
+                  <TouchableOpacity
+                    style={[
+                      styles.genderButton,
+                      selectedGender === 'common' && styles.selectedGenderButton,
+                    ]}
+                    onPress={() => setSelectedGender('common')}
+                  >
+                    <Text style={styles.genderButtonText}>👥 Общие</Text>
+                  </TouchableOpacity>
                   <TouchableOpacity
                     style={[
                       styles.genderButton,
@@ -317,13 +326,15 @@ const styles = StyleSheet.create({
   },
   genderContainer: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: 12,
   },
   genderButton: {
-    flex: 1,
+    minWidth: '30%',
     backgroundColor: 'rgba(0, 0, 0, 0.3)',
     borderRadius: 15,
     paddingVertical: 12,
+    paddingHorizontal: 16,
     alignItems: 'center',
     borderWidth: 2,
     borderColor: 'transparent',
