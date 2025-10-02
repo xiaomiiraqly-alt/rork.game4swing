@@ -116,12 +116,23 @@ export const [GameProvider, useGame] = createContextHook(() => {
         AsyncStorage.getItem(STORAGE_KEYS.GAME_STATE),
       ]);
 
+      console.log('Loading data from storage...');
+      console.log('Stored tasks:', storedTasks ? 'Found' : 'Not found');
+      console.log('Stored game state:', storedGameState ? 'Found' : 'Not found');
+
       if (storedTasks) {
-        setTaskBank(JSON.parse(storedTasks));
+        const parsedTasks = JSON.parse(storedTasks);
+        console.log('Loaded tasks from storage:', parsedTasks);
+        setTaskBank(parsedTasks);
+      } else {
+        console.log('No stored tasks found, using initial task bank');
+        await AsyncStorage.setItem(STORAGE_KEYS.TASKS, JSON.stringify(initialTaskBank));
       }
 
       if (storedGameState) {
-        setGameState(JSON.parse(storedGameState));
+        const parsedGameState = JSON.parse(storedGameState);
+        console.log('Loaded game state from storage');
+        setGameState(parsedGameState);
       }
     } catch (error) {
       console.error('Error loading data:', error);
@@ -133,8 +144,10 @@ export const [GameProvider, useGame] = createContextHook(() => {
   const saveTaskBank = useCallback(async (newTaskBank: TaskBank) => {
     if (!newTaskBank) return;
     try {
+      console.log('Saving task bank to storage...');
       await AsyncStorage.setItem(STORAGE_KEYS.TASKS, JSON.stringify(newTaskBank));
       setTaskBank(newTaskBank);
+      console.log('Task bank saved successfully');
     } catch (error) {
       console.error('Error saving task bank:', error);
     }
@@ -240,6 +253,8 @@ export const [GameProvider, useGame] = createContextHook(() => {
       gender,
     };
 
+    console.log('Adding new task:', newTask);
+
     const newTaskBank = {
       ...taskBank,
       [category]: {
@@ -248,10 +263,13 @@ export const [GameProvider, useGame] = createContextHook(() => {
       },
     };
 
+    console.log('New task bank:', newTaskBank);
     saveTaskBank(newTaskBank);
   }, [taskBank, saveTaskBank]);
 
   const deleteTask = useCallback((category: Category, gender: Gender, taskId: string) => {
+    console.log('Deleting task:', taskId);
+    
     const newTaskBank = {
       ...taskBank,
       [category]: {
@@ -260,6 +278,7 @@ export const [GameProvider, useGame] = createContextHook(() => {
       },
     };
 
+    console.log('Task bank after deletion:', newTaskBank);
     saveTaskBank(newTaskBank);
   }, [taskBank, saveTaskBank]);
 
