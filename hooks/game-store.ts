@@ -224,6 +224,18 @@ export const [GameProvider, useGame] = createContextHook(() => {
     saveTaskBank(newTaskBank);
   }, [taskBank, saveTaskBank]);
 
+  const deleteTask = useCallback((category: Category, gender: Gender, taskId: string) => {
+    const newTaskBank = {
+      ...taskBank,
+      [category]: {
+        ...taskBank[category],
+        [gender]: taskBank[category][gender].filter(task => task.id !== taskId),
+      },
+    };
+
+    saveTaskBank(newTaskBank);
+  }, [taskBank, saveTaskBank]);
+
   const resetGame = useCallback(() => {
     saveGameState(initialGameState);
   }, [saveGameState]);
@@ -245,6 +257,7 @@ export const [GameProvider, useGame] = createContextHook(() => {
     nextPlayer,
     nextCategory,
     addTask,
+    deleteTask,
     resetGame,
     canMoveToNextCategory,
   }), [
@@ -258,6 +271,7 @@ export const [GameProvider, useGame] = createContextHook(() => {
     nextPlayer,
     nextCategory,
     addTask,
+    deleteTask,
     resetGame,
     canMoveToNextCategory,
   ]);

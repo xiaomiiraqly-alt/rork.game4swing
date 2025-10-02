@@ -1,6 +1,6 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { Stack } from 'expo-router';
-import { Plus } from 'lucide-react-native';
+import { Plus, Trash2 } from 'lucide-react-native';
 import { useEffect, useRef, useState } from 'react';
 import {
   Animated,
@@ -20,13 +20,15 @@ import { useGame } from '@/hooks/game-store';
 import { Category, Gender } from '@/types/game';
 
 export default function TaskEditorScreen() {
-  const { taskBank, addTask } = useGame();
+  const { taskBank, addTask, deleteTask } = useGame();
   const insets = useSafeAreaInsets();
   const [selectedCategory, setSelectedCategory] = useState<Category>('знакомство');
   const [selectedGender, setSelectedGender] = useState<Gender>('male');
   const [newTaskText, setNewTaskText] = useState('');
   const [showErrorModal, setShowErrorModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [taskToDelete, setTaskToDelete] = useState<{ id: string; text: string } | null>(null);
 
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const sectionAnim1 = useRef(new Animated.Value(0)).current;
@@ -72,6 +74,19 @@ export default function TaskEditorScreen() {
     addTask(selectedCategory, selectedGender, newTaskText.trim());
     setNewTaskText('');
     setShowSuccessModal(true);
+  };
+
+  const handleDeleteTask = (taskId: string, taskText: string) => {
+    setTaskToDelete({ id: taskId, text: taskText });
+    setShowDeleteModal(true);
+  };
+
+  const confirmDelete = () => {
+    if (taskToDelete) {
+      deleteTask(selectedCategory, selectedGender, taskToDelete.id);
+      setTaskToDelete(null);
+    }
+    setShowDeleteModal(false);
   };
 
   const currentTasks = taskBank[selectedCategory][selectedGender];
@@ -164,6 +179,12 @@ export default function TaskEditorScreen() {
                     <View key={task.id} style={styles.taskItem}>
                       <Text style={styles.taskNumber}>{index + 1}.</Text>
                       <Text style={styles.taskItemText}>{task.text}</Text>
+                      <TouchableOpacity
+                        style={styles.deleteButton}
+                        onPress={() => handleDeleteTask(task.id, task.text)}
+                      >
+                        <Trash2 size={18} color="#FF6B6B" />
+                      </TouchableOpacity>
                     </View>
                   ))}
                   {currentTasks.length === 0 && (
@@ -210,6 +231,35 @@ export default function TaskEditorScreen() {
             >
               <Text style={styles.modalButtonText}>OK</Text>
             </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      <Modal
+        visible={showDeleteModal}
+        transparent
+        animationType="fade"
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Удалить задание?</Text>
+            <Text style={styles.modalText}>
+              {taskToDelete?.text}
+            </Text>
+            <View style={styles.modalButtonsRow}>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.modalButtonSecondary]}
+                onPress={() => setShowDeleteModal(false)}
+              >
+                <Text style={[styles.modalButtonText, styles.modalButtonTextSecondary]}>Отмена</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.modalButtonDanger]}
+                onPress={confirmDelete}
+              >
+                <Text style={styles.modalButtonText}>Удалить</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
       </Modal>
@@ -341,6 +391,7 @@ const styles = StyleSheet.create({
     gap: 8,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.1)',
+    alignItems: 'center',
   },
   taskNumber: {
     color: '#FFFFFF',
@@ -400,5 +451,25 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
+  },
+  deleteButton: {
+    padding: 8,
+    marginLeft: 'auto',
+  },
+  modalButtonsRow: {
+    flexDirection: 'row',
+    gap: 12,
+    width: '100%',
+  },
+  modalButtonSecondary: {
+    backgroundColor: '#E0E0E0',
+    flex: 1,
+  },
+  modalButtonDanger: {
+    backgroundColor: '#FF6B6B',
+    flex: 1,
+  },
+  modalButtonTextSecondary: {
+    color: '#333',
   },
 });
